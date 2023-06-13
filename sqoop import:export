@@ -1,0 +1,70 @@
+sqoop export \
+--connect jdbc:mysql://cxln2:3306/sqoopex \
+--username 'sqoopuser' \
+--password 'NHkkP876rp' \
+--table SV_v1 \
+--export-dir  hdfs://cxln1.c.thelab-240901.internal:8020/user/bigdatacloudxlab41716/temp1/mysql_sqoopex_RVedav \
+--fields-terminated-by '\t' \
+--lines-terminated-by '\n' \
+--m 1
+-----------------------------------------------------------------
+sqoop import \
+--connect jdbc:mysql://cxln2:3306/sqoopex \
+--username 'sqoopuser' \
+--password 'NHkkP876rp' \
+--query 'select * from sqoopex.RVedav where $CONDITIONS' \
+--target-dir  hdfs://cxln1.c.thelab-240901.internal:8020/user/bigdatacloudxlab41716/temp1/mysql_sqoopex_RVedav \
+--fields-terminated-by '\t' \
+--lines-terminated-by '\n' \
+--m 1	
+------------------------------------------------------------------
+sqoop import \
+ --connect jdbc:mysql://cxln2:3306/sqoopex \
+ --username 'sqoopuser' \
+ --password 'NHkkP876rp' \
+ --query 'select * from sqoopex.vedav_v2 where $CONDITIONS' \
+ --target-dir  hdfs://cxln1.c.thelab-240901.internal:8020/user/bigdatacloudxlab27228/vedav_dir/mysql_sqoopex_vedav_v2 \
+ --fields-terminated-by '\t' \
+ --lines-terminated-by '\n' \
+--------------------------------------------------------------
+hdfs dfs -cat /user/bigdatacloudxlab27228/vedav_dir/mysql_sqoopex_vedav_v2/part-m-00000 | sed 's/Symonds/null/g; s/Singh/null/g; s/Sehwag/null/g' | hdfs dfs -put - /user/bigdatacloudxlab27228/v3/vedav_null
+
+hdfs dfs -cat /user/bigdatacloudxlab27228/v3/vedav_null
+-------------------
+Importing using spark
+
+import org.apache.spark.sql.SparkSession
+
+val spark = SparkSession.builder().appName("MySQL to HDFS using Spark").master("local[*]")  // Use "*" to use all available cores.getOrCreate()
+
+val jdbcDF = spark.read.format("jdbc").option("url", "jdbc:mysql://cxln2:3306/sqoopex").option("dbtable", "(select * from sqoopex.vedav_v2) as vedav_v2").option("user", "sqoopuser").option("password", "NHkkP876rp").load()
+
+jdbcDF.write.format("parquet").option("header", "true").option("delimiter", "\t").option("compression", "snappy")  // Optional, to compress the output file.mode("overwrite").save("hdfs://cxln1.c.thelab-240901.internal:8020/user/bigdatacloudxlab27228/vedav_dir/mysql_spark_vedav_v2")
+---------------------------------
+pyspark --driver-class-path /usr/share/java/mysql-connector-java.jar
+
+from pyspark import SparkConf, SparkContext
+from pyspark.sql import SQLContext
+
+conf = SparkConf().setAppName("ImportData")
+sc = SparkContext.getOrCreate(conf=conf)
+sqlContext = SQLContext(sc)
+
+url = "jdbc:mysql://cxln2:3306/sqoopex"
+table = "vedav_v2"
+user = "sqoopuser"
+password = "NHkkP876rp"
+target_dir = "/user/bigdatacloudxlab27228/v4/dir_vedav1"
+
+jdbc_properties = {
+    "user": user,
+    "password": password,
+    "driver": "com.mysql.jdbc.Driver"
+}
+
+# Read data from MySQL database
+df = sqlContext.read.jdbc(url=url, table=table, properties=jdbc_properties)
+
+# Write data to HDFS in Parquet format
+df.write.parquet(target_dir)
+
