@@ -7,7 +7,7 @@ sqoop export \
 --fields-terminated-by '\t' \
 --lines-terminated-by '\n' \
 --m 1
------------------------------------------------------------------
+
 sqoop import \
 --connect jdbc:mysql://cxln2:3306/sqoopex \
 --username 'sqoopuser' \
@@ -17,7 +17,7 @@ sqoop import \
 --fields-terminated-by '\t' \
 --lines-terminated-by '\n' \
 --m 1	
-------------------------------------------------------------------
+
 sqoop import \
  --connect jdbc:mysql://cxln2:3306/sqoopex \
  --username 'sqoopuser' \
@@ -30,7 +30,7 @@ sqoop import \
 hdfs dfs -cat /user/bigdatacloudxlab27228/vedav_dir/mysql_sqoopex_vedav_v2/part-m-00000 | sed 's/Symonds/null/g; s/Singh/null/g; s/Sehwag/null/g' | hdfs dfs -put - /user/bigdatacloudxlab27228/v3/vedav_null
 
 hdfs dfs -cat /user/bigdatacloudxlab27228/v3/vedav_null
--------------------
+
 Importing using spark
 
 import org.apache.spark.sql.SparkSession
