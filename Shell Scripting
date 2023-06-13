@@ -1,0 +1,10 @@
+write shell script file to run the following requirement 
+
+take one data set.
+in local file with my initials_datasetname_landing.
+move the above to HDFS with HDFS_datasetname_landing folder.
+create a hive table on top of that data set.
+hive table database should be database_name and table name is file_name 
+read the data from above table in spark and replace nulls with N/A.
+write the resultant data in parquet format under the directory of HDFS_datasetname_curated.
+load resultant parquet data into my sql table using sqoop\
